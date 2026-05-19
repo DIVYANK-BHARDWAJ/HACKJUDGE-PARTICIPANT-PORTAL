@@ -1,0 +1,114 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #09090f;
+  --surface: #0f0f1a;
+  --surface2: #161625;
+  --border: #1e1e35;
+  --border2: #2a2a45;
+  --accent: #7c6af7;
+  --accent2: #5e4df0;
+  --lime: #a3ff5e;
+  --cyan: #00e5c9;
+  --pink: #ff4d8f;
+  --amber: #ffb830;
+  --text: #f0eeff;
+  --text2: #9490b8;
+  --text3: #5c5880;
+  
+  --gold: #ffd700;
+  --silver: #c0c0d8;
+  --bronze: #cd7f32;
+  
+  --font-sans: 'Syne', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  margin: 0;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Drifting radial background orbs */
+.glow-orb {
+  position: fixed;
+  width: 50vw;
+  height: 50vw;
+  max-width: 600px;
+  max-height: 600px;
+  border-radius: 50%;
+  filter: blur(140px);
+  opacity: 0.12;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.glow-violet {
+  background: var(--accent);
+  top: -10%;
+  left: -10%;
+  animation: floatOrb1 16s ease-in-out infinite alternate;
+}
+
+.glow-cyan {
+  background: var(--cyan);
+  bottom: -10%;
+  right: -10%;
+  animation: floatOrb2 16s ease-in-out infinite alternate;
+}
+
+@keyframes floatOrb1 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(30px, 20px) scale(1.1); }
+}
+
+@keyframes floatOrb2 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-30px, -20px) scale(1.1); }
+}
+
+/* Background Noise overlay */
+.noise-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border2);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* Glow utility classes */
+.shadow-glow {
+  box-shadow: 0 0 15px rgba(124, 106, 247, 0.15);
+}
+.shadow-glow-hover:hover {
+  box-shadow: 0 0 25px rgba(124, 106, 247, 0.35);
+}
+
+.font-mono-custom {
+  font-family: var(--font-mono);
+}
