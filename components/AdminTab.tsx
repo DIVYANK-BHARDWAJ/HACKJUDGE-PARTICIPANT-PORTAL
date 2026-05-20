@@ -63,6 +63,7 @@ export default function AdminTab({
       });
       const data = await res.json();
       if (res.ok && data.success) {
+        localStorage.setItem('hackarena_admin_pass', password);
         setIsAuthenticated(true);
         addToast('Admin panel unlocked successfully.', 'success');
       } else {

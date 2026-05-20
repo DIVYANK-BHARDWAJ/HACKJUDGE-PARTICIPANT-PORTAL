@@ -100,7 +100,29 @@ export default function SubmitTab({
       if (apiResultRef.current.error) {
         addToast(apiResultRef.current.error, 'error');
       } else {
-        addToast(`Submission evaluated successfully! Score: ${apiResultRef.current.score}`, 'success');
+        const { score, highScore, improved } = apiResultRef.current;
+        
+        // Parse repo key and increment submission count
+        let repoKey = repoUrl.trim().toLowerCase();
+        try {
+          const cleaned = repoUrl.trim().replace(/\.git$/, '').replace(/\/$/, '');
+          const parts = cleaned.split('/');
+          const name = parts.pop() || '';
+          const owner = parts.pop() || '';
+          if (name && owner) {
+            repoKey = `${owner}/${name}`.toLowerCase();
+          }
+        } catch {}
+
+        const counts = JSON.parse(localStorage.getItem('hackarena_submission_counts') || '{}');
+        counts[repoKey] = (counts[repoKey] || 0) + 1;
+        localStorage.setItem('hackarena_submission_counts', JSON.stringify(counts));
+
+        if (improved) {
+          addToast(`New high score! Evaluated: ${score} pts`, 'success');
+        } else {
+          addToast(`Evaluated: ${score} pts. (High score remains: ${highScore} pts)`, 'success');
+        }
         onSubmissionSuccess(apiResultRef.current);
       }
 
@@ -116,6 +138,25 @@ export default function SubmitTab({
     e.preventDefault();
     if (!repoUrl || !repoUrl.trim().startsWith('https://github.com/')) {
       addToast('Please input a valid public GitHub URL (https://github.com/username/repo)', 'error');
+      return;
+    }
+
+    // Check submission count for this repository
+    let repoKey = repoUrl.trim().toLowerCase();
+    try {
+      const cleaned = repoUrl.trim().replace(/\.git$/, '').replace(/\/$/, '');
+      const parts = cleaned.split('/');
+      const name = parts.pop() || '';
+      const owner = parts.pop() || '';
+      if (name && owner) {
+        repoKey = `${owner}/${name}`.toLowerCase();
+      }
+    } catch {}
+
+    const counts = JSON.parse(localStorage.getItem('hackarena_submission_counts') || '{}');
+    const currentCount = counts[repoKey] || 0;
+    if (currentCount >= 2) {
+      addToast('you cannot submit to arena more than 2 times', 'error');
       return;
     }
 

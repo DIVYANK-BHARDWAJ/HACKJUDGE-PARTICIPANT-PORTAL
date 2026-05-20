@@ -8,6 +8,8 @@ interface ResultData {
   repo_name: string;
   owner: string;
   score: number;
+  latest_score?: number;
+  improved?: boolean;
 }
 
 interface ResultTabProps {
@@ -112,6 +114,11 @@ export default function ResultTab({
               {displayScore.toFixed(2)}
             </span>
             <div className="text-xs text-[var(--text2)] font-mono-custom uppercase tracking-wider mt-1">out of 100</div>
+            {result.latest_score !== undefined && result.latest_score !== result.score && (
+              <div className="text-xs text-[var(--text3)] font-mono-custom mt-2 bg-[var(--surface2)] border border-[var(--border)] px-3 py-1 rounded-full inline-block">
+                Latest attempt: <span className="text-white font-bold">{result.latest_score.toFixed(2)}</span>
+              </div>
+            )}
           </div>
 
           {/* Rank Badge */}

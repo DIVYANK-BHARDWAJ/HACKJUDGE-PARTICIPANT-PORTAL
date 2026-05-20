@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import SubmitTab from '@/components/SubmitTab';
-import LeaderboardTab from '@/components/LeaderboardTab';
 import ResultTab from '@/components/ResultTab';
 import AdminTab from '@/components/AdminTab';
 
@@ -23,19 +22,14 @@ interface ToastMessage {
   type: 'success' | 'error';
 }
 
-const DEFAULT_SUBMISSIONS: Submission[] = [
-  { id: 'sub-1', github_url: 'https://github.com/facebook/react', repo_name: 'react', owner: 'facebook', score: 94.20, submitted_at: new Date(Date.now() - 3600000 * 4).toISOString() },
-  { id: 'sub-2', github_url: 'https://github.com/vercel/next.js', repo_name: 'next.js', owner: 'vercel', score: 91.50, submitted_at: new Date(Date.now() - 3600000 * 3).toISOString() },
-  { id: 'sub-3', github_url: 'https://github.com/supabase/supabase', repo_name: 'supabase', owner: 'supabase', score: 89.10, submitted_at: new Date(Date.now() - 3600000 * 2).toISOString() },
-  { id: 'sub-4', github_url: 'https://github.com/tailwindlabs/tailwindcss', repo_name: 'tailwindcss', owner: 'tailwindlabs', score: 86.40, submitted_at: new Date(Date.now() - 3600000).toISOString() },
-];
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'submit' | 'leaderboard' | 'my-result' | 'admin'>('submit');
+  const [activeTab, setActiveTab] = useState<'submit' | 'my-result' | 'admin'>('submit');
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [userResult, setUserResult] = useState<any | null>(null);
   const [userSubmissionUrl, setUserSubmissionUrl] = useState<string | null>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [isOrganizer, setIsOrganizer] = useState(false);
 
   // Persistent settings (toggled via Admin)
   const [isFrozen, setIsFrozen] = useState(false);
@@ -43,6 +37,13 @@ export default function Home() {
 
   // Load configuration and cached submissions on mount
   useEffect(() => {
+    // Check organizer access query parameters
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('organizer') === 'true' || params.get('admin') === 'true') {
+        setIsOrganizer(true);
+      }
+    }
     // End time initialization
     const savedEndTime = localStorage.getItem('hackarena_end_time');
     const defaultEndTime = process.env.VITE_HACKATHON_END_TIME || '2026-12-01T18:00:00Z';
@@ -55,7 +56,7 @@ export default function Home() {
     // Local submissions seed check
     const localSaved = localStorage.getItem('hackarena_submissions');
     if (!localSaved) {
-      localStorage.setItem('hackarena_submissions', JSON.stringify(DEFAULT_SUBMISSIONS));
+      localStorage.setItem('hackarena_submissions', JSON.stringify([]));
     }
 
     // User result cached session check
@@ -80,7 +81,7 @@ export default function Home() {
           .select('*')
           .order('score', { ascending: false });
 
-        if (!error && data && data.length > 0) {
+        if (!error && data) {
           setSubmissions(data);
           // Sync database data into local cache
           localStorage.setItem('hackarena_submissions', JSON.stringify(data));
@@ -120,7 +121,9 @@ export default function Home() {
       github_url: result.github_url,
       repo_name: result.repo_name,
       owner: result.owner,
-      score: result.score,
+      score: result.highScore ?? result.score, // Ensure high score is kept
+      latest_score: result.score,
+      improved: result.improved ?? true,
       submitted_at: new Date().toISOString()
     };
 
@@ -165,6 +168,16 @@ export default function Home() {
     const target = submissions.find(s => s.id === id);
     if (!target) return false;
 
+    // Helper function to remove repo count key
+    const removeCountLocally = () => {
+      try {
+        const repoKey = `${target.owner}/${target.repo_name}`.toLowerCase();
+        const counts = JSON.parse(localStorage.getItem('hackarena_submission_counts') || '{}');
+        delete counts[repoKey];
+        localStorage.setItem('hackarena_submission_counts', JSON.stringify(counts));
+      } catch {}
+    };
+
     // Call API proxy
     try {
       const password = localStorage.getItem('hackarena_admin_pass') || 'admin';
@@ -175,6 +188,7 @@ export default function Home() {
       });
 
       if (res.ok) {
+        removeCountLocally();
         // Remove locally
         const updated = submissions.filter(s => s.id !== id);
         setSubmissions(updated);
@@ -195,6 +209,7 @@ export default function Home() {
     }
 
     // Fallback: Delete locally
+    removeCountLocally();
     const updated = submissions.filter(s => s.id !== id);
     setSubmissions(updated);
     localStorage.setItem('hackarena_submissions', JSON.stringify(updated));
@@ -214,6 +229,7 @@ export default function Home() {
       if (res.ok) {
         setSubmissions([]);
         localStorage.setItem('hackarena_submissions', JSON.stringify([]));
+        localStorage.setItem('hackarena_submission_counts', JSON.stringify({}));
         setUserResult(null);
         setUserSubmissionUrl(null);
         localStorage.removeItem('hackarena_user_result');
@@ -226,6 +242,7 @@ export default function Home() {
     // Fallback locally
     setSubmissions([]);
     localStorage.setItem('hackarena_submissions', JSON.stringify([]));
+    localStorage.setItem('hackarena_submission_counts', JSON.stringify({}));
     setUserResult(null);
     setUserSubmissionUrl(null);
     localStorage.removeItem('hackarena_user_result');
@@ -259,16 +276,6 @@ export default function Home() {
               Submit
             </button>
             <button
-              onClick={() => setActiveTab('leaderboard')}
-              className={`px-4 py-2 rounded-lg text-xs md:text-sm font-semibold tracking-wide cursor-pointer transition-colors duration-200 ${
-                activeTab === 'leaderboard' 
-                  ? 'bg-[var(--surface2)] border border-[var(--border)] text-white' 
-                  : 'text-[var(--text2)] hover:text-white'
-              }`}
-            >
-              Leaderboard
-            </button>
-            <button
               onClick={() => setActiveTab('my-result')}
               className={`px-4 py-2 rounded-lg text-xs md:text-sm font-semibold tracking-wide cursor-pointer transition-colors duration-200 ${
                 activeTab === 'my-result' 
@@ -278,16 +285,18 @@ export default function Home() {
             >
               My Result
             </button>
-            <button
-              onClick={() => setActiveTab('admin')}
-              className={`px-4 py-2 rounded-lg text-xs md:text-sm font-semibold tracking-wide cursor-pointer transition-colors duration-200 ${
-                activeTab === 'admin' 
-                  ? 'bg-[var(--surface2)] border border-[var(--border)] text-white' 
-                  : 'text-[var(--text2)] hover:text-white'
-              }`}
-            >
-              Admin
-            </button>
+            {isOrganizer && (
+              <button
+                onClick={() => setActiveTab('admin')}
+                className={`px-4 py-2 rounded-lg text-xs md:text-sm font-semibold tracking-wide cursor-pointer transition-colors duration-200 ${
+                  activeTab === 'admin' 
+                    ? 'bg-[var(--surface2)] border border-[var(--border)] text-white' 
+                    : 'text-[var(--text2)] hover:text-white'
+                }`}
+              >
+                Admin
+              </button>
+            )}
           </nav>
 
           {/* Live Badge counter */}
@@ -316,15 +325,6 @@ export default function Home() {
             />
           )}
 
-          {activeTab === 'leaderboard' && (
-            <LeaderboardTab
-              submissions={submissions}
-              userSubmissionUrl={userSubmissionUrl}
-              isFrozen={isFrozen}
-              onRefresh={fetchStandings}
-            />
-          )}
-
           {activeTab === 'my-result' && (
             <ResultTab
               result={userResult}
@@ -333,7 +333,7 @@ export default function Home() {
             />
           )}
 
-          {activeTab === 'admin' && (
+          {activeTab === 'admin' && isOrganizer && (
             <AdminTab
               submissions={submissions}
               isFrozen={isFrozen}
