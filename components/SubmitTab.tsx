@@ -187,6 +187,39 @@ export default function SubmitTab({
 
       if (!response.ok) {
         apiResultRef.current = { error: data.error || 'Evaluation failed. Please try again.' };
+      } else if (data.status === 'analyzing' && data.id) {
+        // Poll endpoint client-side every 2 seconds to prevent serverless function timeouts
+        const submissionId = data.id;
+        let isDone = false;
+        let attempts = 0;
+        const maxAttempts = 30; // 60 seconds total polling limit
+        
+        while (!isDone && attempts < maxAttempts) {
+          attempts++;
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          try {
+            const pollResponse = await fetch(`/api/submit?id=${submissionId}&github_url=${encodeURIComponent(repoUrl.trim())}`);
+            const pollData = await pollResponse.json();
+            
+            if (!pollResponse.ok) {
+              apiResultRef.current = { error: pollData.error || 'Evaluation status fetch failed.' };
+              isDone = true;
+            } else if (pollData.status === 'complete') {
+              apiResultRef.current = pollData;
+              isDone = true;
+            } else if (pollData.status === 'error') {
+              apiResultRef.current = { error: pollData.error || 'Analysis failed on the judging engine.' };
+              isDone = true;
+            }
+          } catch (pollErr) {
+            console.warn(`[Client Polling] Attempt ${attempts} failed:`, pollErr);
+          }
+        }
+        
+        if (!isDone) {
+          apiResultRef.current = { error: 'Evaluation timed out. Please check again in a few moments.' };
+        }
       } else {
         apiResultRef.current = data;
       }

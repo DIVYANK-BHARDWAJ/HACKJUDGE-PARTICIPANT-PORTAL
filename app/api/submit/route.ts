@@ -35,11 +35,10 @@ export async function POST(req: NextRequest) {
     }
 
     let score = 0;
+    let analyzeData: any;
 
     try {
-      // Build URL endpoints matching your engine API structure
       const analyzeUrl = `${rawEngineUrl}/api/analyze`;
-      
       console.log(`[API Proxy] Submitting to judging engine at: ${analyzeUrl}`);
       const analyzeRes = await fetch(analyzeUrl, {
         method: 'POST',
@@ -51,73 +50,43 @@ export async function POST(req: NextRequest) {
         })
       });
 
-      const analyzeData = await analyzeRes.json();
+      analyzeData = await analyzeRes.json();
       
       if (!analyzeRes.ok) {
-        throw new Error(analyzeData.error || 'Judging Engine initiation failed.');
+        return NextResponse.json({ error: analyzeData.error || 'Judging Engine initiation failed.' }, { status: analyzeRes.status });
       }
-
-      const submissionId = analyzeData.id;
-      
-      if (submissionId) {
-        console.log(`[API Proxy] Analysis initiated with ID: ${submissionId}. Polling for completion...`);
-        
-        let status = analyzeData.status || 'analyzing';
-        const resultUrl = `${rawEngineUrl}/api/result/${submissionId}`;
-
-        if (status === 'complete') {
-          // Cached complete hit: Fetch score directly
-          const resultRes = await fetch(resultUrl);
-          if (resultRes.ok) {
-            const resultData = await resultRes.json();
-            score = parseFloat(resultData.scoreTotal || 0);
-            console.log(`[API Proxy] Cached hit complete! Score: ${score}`);
-          } else {
-            throw new Error('Failed to fetch details for completed cached evaluation.');
-          }
-        } else {
-          // Needs polling
-          let attempts = 0;
-          const maxAttempts = 15; // 15 attempts * 2s = 30 seconds max timeout
-          
-          while (status === 'analyzing' && attempts < maxAttempts) {
-            await new Promise((resolve) => setTimeout(resolve, 2000));
-            attempts++;
-            
-            try {
-              const resultRes = await fetch(resultUrl);
-              if (resultRes.ok) {
-                const resultData = await resultRes.json();
-                status = resultData.status;
-                if (status === 'complete') {
-                  score = parseFloat(resultData.scoreTotal || 0);
-                  console.log(`[API Proxy] Analysis complete! Score: ${score}`);
-                  break;
-                } else if (status === 'error') {
-                  throw new Error(resultData.errorMessage || 'Analysis failed on the judging engine.');
-                }
-              }
-            } catch (err: any) {
-              console.warn(`[API Proxy] Polling attempt ${attempts} failed:`, err.message);
-            }
-          }
-        }
-
-        if (status !== 'complete') {
-          throw new Error('Judging engine evaluation timed out.');
-        }
-      } else {
-        // If no background ID returned, check if score was returned directly
-        score = parseFloat(analyzeData.score || analyzeData.scoreTotal || 0);
-      }
-
-      if (score === 0) {
-        throw new Error('Judging engine returned a score of 0.');
-      }
-
     } catch (err: any) {
       console.error('Judging engine call failed:', err);
       return NextResponse.json({ error: `Judging engine evaluation failed: ${err.message}` }, { status: 500 });
+    }
+
+    const submissionId = analyzeData.id;
+    let status = analyzeData.status || 'analyzing';
+
+    if (submissionId) {
+      const resultUrl = `${rawEngineUrl}/api/result/${submissionId}`;
+
+      if (status === 'complete') {
+        // Cached complete hit: Fetch score directly
+        const resultRes = await fetch(resultUrl);
+        if (resultRes.ok) {
+          const resultData = await resultRes.json();
+          score = parseFloat(resultData.scoreTotal || 0);
+          console.log(`[API Proxy] Cached hit complete! Score: ${score}`);
+        } else {
+          return NextResponse.json({ error: 'Failed to fetch details for completed cached evaluation.' }, { status: 500 });
+        }
+      } else {
+        // Needs client-side polling. Immediately return the status to client.
+        return NextResponse.json({ id: submissionId, status: 'analyzing', repo_name, owner, github_url });
+      }
+    } else {
+      // If no background ID returned, check if score was returned directly
+      score = parseFloat(analyzeData.score || analyzeData.scoreTotal || 0);
+    }
+
+    if (score === 0) {
+      return NextResponse.json({ error: 'Judging engine returned a score of 0.' }, { status: 500 });
     }
 
     // Try storing in Supabase
@@ -186,6 +155,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({
+      status: 'complete',
       score,
       highScore,
       improved,
@@ -198,5 +168,127 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || 'Submission process failed.' }, { status: 500 });
+  }
+}
+
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+    const github_url = searchParams.get('github_url');
+    
+    if (!id) {
+      return NextResponse.json({ error: 'Missing submission ID' }, { status: 400 });
+    }
+
+    let rawEngineUrl = process.env.VITE_JUDGING_ENGINE_URL || '';
+    if (rawEngineUrl.endsWith('/')) {
+      rawEngineUrl = rawEngineUrl.slice(0, -1);
+    }
+    
+    if (!rawEngineUrl || rawEngineUrl.includes('placeholder')) {
+      return NextResponse.json({ error: 'Judging engine URL is not configured.' }, { status: 500 });
+    }
+
+    const resultUrl = `${rawEngineUrl}/api/result/${id}`;
+    const resultRes = await fetch(resultUrl);
+    
+    if (!resultRes.ok) {
+      const errData = await resultRes.json().catch(() => ({}));
+      return NextResponse.json({ error: errData.error || 'Failed to fetch status from judging engine.' }, { status: resultRes.status });
+    }
+
+    const resultData = await resultRes.json();
+    const status = resultData.status;
+
+    if (status !== 'complete') {
+      if (status === 'error') {
+        return NextResponse.json({ status: 'error', error: resultData.errorMessage || 'Analysis failed on the judging engine.' });
+      }
+      return NextResponse.json({ id, status, errorMessage: resultData.errorMessage || null });
+    }
+
+    // Since status is complete, save/upsert in Supabase!
+    const score = parseFloat(resultData.scoreTotal || 0);
+    if (score === 0) {
+      return NextResponse.json({ error: 'Judging engine returned a score of 0.' }, { status: 500 });
+    }
+
+    const repoUrl = github_url || resultData.repoUrl;
+    if (!repoUrl) {
+      return NextResponse.json({ error: 'Missing github url.' }, { status: 400 });
+    }
+
+    const { name: repo_name, owner } = parseGithubUrl(repoUrl);
+
+    let dbData = null;
+    let dbError = null;
+    let highScore = score;
+    let improved = true;
+    const isPlaceholder = process.env.VITE_SUPABASE_URL?.includes('placeholder');
+
+    if (!isPlaceholder) {
+      try {
+        const { data: existing, error: fetchError } = await supabase
+          .from('submissions')
+          .select('*')
+          .eq('github_url', repoUrl)
+          .maybeSingle();
+
+        if (existing) {
+          const existingScore = parseFloat(existing.score);
+          if (score > existingScore) {
+            const { data, error } = await supabase
+              .from('submissions')
+              .update({ score, repo_name, owner })
+              .eq('github_url', repoUrl)
+              .select();
+            
+            if (error) dbError = error.message;
+            else {
+              dbData = data;
+              highScore = score;
+              improved = true;
+            }
+          } else {
+            dbData = [existing];
+            highScore = existingScore;
+            improved = false;
+          }
+        } else {
+          const { data, error } = await supabase
+            .from('submissions')
+            .insert([{ github_url: repoUrl, repo_name, owner, score }])
+            .select();
+          
+          if (error) dbError = error.message;
+          else {
+            dbData = data;
+            highScore = score;
+            improved = true;
+          }
+        }
+      } catch (err: any) {
+        dbError = err.message;
+      }
+    } else {
+      dbError = 'Supabase keys are placeholders. Storing submission in local fallback.';
+    }
+
+    return NextResponse.json({
+      status: 'complete',
+      score,
+      highScore,
+      improved,
+      repo_name,
+      owner,
+      github_url: repoUrl,
+      dbData,
+      dbError,
+      isMock: false
+    });
+
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || 'GET process failed.' }, { status: 500 });
   }
 }
