@@ -12,6 +12,8 @@ interface Submission {
   github_url: string;
   repo_name: string;
   owner: string;
+  team_name?: string;
+  deployment_link?: string;
   score: number;
   submitted_at: string;
 }
@@ -46,7 +48,7 @@ export default function Home() {
     }
     // End time initialization
     const savedEndTime = localStorage.getItem('hackarena_end_time');
-    const defaultEndTime = process.env.VITE_HACKATHON_END_TIME || '2026-12-01T18:00:00Z';
+    const defaultEndTime = process.env.VITE_HACKATHON_END_TIME || '2026-05-21T12:30:00Z';
     setEndTime(savedEndTime || defaultEndTime);
 
     // Freeze state initialization
@@ -121,6 +123,8 @@ export default function Home() {
       github_url: result.github_url,
       repo_name: result.repo_name,
       owner: result.owner,
+      team_name: result.team_name || '',
+      deployment_link: result.deployment_link || '',
       score: result.highScore ?? result.score, // Ensure high score is kept
       latest_score: result.score,
       improved: result.improved ?? true,

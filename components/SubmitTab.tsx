@@ -25,6 +25,8 @@ export default function SubmitTab({
   addToast
 }: SubmitTabProps) {
   const [repoUrl, setRepoUrl] = useState('');
+  const [teamName, setTeamName] = useState('');
+  const [deploymentLink, setDeploymentLink] = useState('');
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [currentStageIndex, setCurrentStageIndex] = useState(0);
   const [progressSegments, setProgressSegments] = useState<boolean[]>([false, false, false, false, false]);
@@ -136,8 +138,16 @@ export default function SubmitTab({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!teamName.trim()) {
+      addToast('Please enter your team name.', 'error');
+      return;
+    }
     if (!repoUrl || !repoUrl.trim().startsWith('https://github.com/')) {
       addToast('Please input a valid public GitHub URL (https://github.com/username/repo)', 'error');
+      return;
+    }
+    if (!deploymentLink.trim()) {
+      addToast('Please enter your deployment link.', 'error');
       return;
     }
 
@@ -181,7 +191,11 @@ export default function SubmitTab({
       const response = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ github_url: repoUrl.trim() })
+        body: JSON.stringify({
+          github_url: repoUrl.trim(),
+          team_name: teamName.trim(),
+          deployment_link: deploymentLink.trim()
+        })
       });
       const data = await response.json();
 
@@ -199,7 +213,7 @@ export default function SubmitTab({
           await new Promise(resolve => setTimeout(resolve, 2000));
           
           try {
-            const pollResponse = await fetch(`/api/submit?id=${submissionId}&github_url=${encodeURIComponent(repoUrl.trim())}`);
+            const pollResponse = await fetch(`/api/submit?id=${submissionId}&github_url=${encodeURIComponent(repoUrl.trim())}&team_name=${encodeURIComponent(teamName.trim())}&deployment_link=${encodeURIComponent(deploymentLink.trim())}`);
             const pollData = await pollResponse.json();
             
             if (!pollResponse.ok) {
@@ -277,9 +291,26 @@ export default function SubmitTab({
           <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[var(--accent)] to-[var(--cyan)]" />
           
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Team Name */}
             <div className="space-y-2">
               <label className="block text-xs font-medium uppercase tracking-widest text-[var(--text3)] font-mono-custom">
-                → YOUR SUBMISSION
+                → TEAM NAME
+              </label>
+              <input
+                type="text"
+                required
+                disabled={isEvaluating}
+                placeholder="e.g. Team Nexus"
+                value={teamName}
+                onChange={(e) => setTeamName(e.target.value)}
+                className="w-full bg-[var(--surface2)] border border-[var(--border)] rounded-lg px-4 py-3 text-sm md:text-base font-mono-custom text-[var(--text)] placeholder-[var(--text3)] focus:outline-none focus:border-[var(--accent)] transition-colors disabled:opacity-60"
+              />
+            </div>
+
+            {/* GitHub Repo */}
+            <div className="space-y-2">
+              <label className="block text-xs font-medium uppercase tracking-widest text-[var(--text3)] font-mono-custom">
+                → GITHUB REPOSITORY
               </label>
               <input
                 type="url"
@@ -288,6 +319,22 @@ export default function SubmitTab({
                 placeholder="https://github.com/you/your-project"
                 value={repoUrl}
                 onChange={(e) => setRepoUrl(e.target.value)}
+                className="w-full bg-[var(--surface2)] border border-[var(--border)] rounded-lg px-4 py-3 text-sm md:text-base font-mono-custom text-[var(--text)] placeholder-[var(--text3)] focus:outline-none focus:border-[var(--accent)] transition-colors disabled:opacity-60"
+              />
+            </div>
+
+            {/* Deployment Link */}
+            <div className="space-y-2">
+              <label className="block text-xs font-medium uppercase tracking-widest text-[var(--text3)] font-mono-custom">
+                → DEPLOYMENT LINK
+              </label>
+              <input
+                type="url"
+                required
+                disabled={isEvaluating}
+                placeholder="https://your-project.vercel.app"
+                value={deploymentLink}
+                onChange={(e) => setDeploymentLink(e.target.value)}
                 className="w-full bg-[var(--surface2)] border border-[var(--border)] rounded-lg px-4 py-3 text-sm md:text-base font-mono-custom text-[var(--text)] placeholder-[var(--text3)] focus:outline-none focus:border-[var(--accent)] transition-colors disabled:opacity-60"
               />
             </div>
@@ -313,7 +360,7 @@ export default function SubmitTab({
 
           <div className="mt-4 pt-4 border-t border-[var(--border)] flex items-start gap-2 text-xs text-[var(--text3)]">
             <Info size={14} className="shrink-0 mt-0.5 text-[var(--text2)]" />
-            <span>Public repositories only · Judged on innovation, structure, and quality standards</span>
+            <span>Public repositories only · Top 15 teams will be manually evaluated using your deployment link</span>
           </div>
         </div>
 

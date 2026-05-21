@@ -7,6 +7,8 @@ interface ResultData {
   github_url: string;
   repo_name: string;
   owner: string;
+  team_name?: string;
+  deployment_link?: string;
   score: number;
   latest_score?: number;
   improved?: boolean;
@@ -134,6 +136,14 @@ export default function ResultTab({
             )}
           </div>
 
+          {/* Team Name */}
+          {result.team_name && (
+            <div className="pt-2">
+              <span className="text-xs text-[var(--text3)] uppercase block font-mono-custom mb-1">TEAM</span>
+              <span className="text-sm font-bold text-white font-mono-custom">{result.team_name}</span>
+            </div>
+          )}
+
           {/* Repo Link */}
           <div className="pt-2">
             <span className="text-xs text-[var(--text3)] uppercase block font-mono-custom mb-1">PROJECT PATH</span>
@@ -147,6 +157,22 @@ export default function ResultTab({
               <ExternalLink size={14} />
             </a>
           </div>
+
+          {/* Deployment Link */}
+          {result.deployment_link && (
+            <div className="pt-2">
+              <span className="text-xs text-[var(--text3)] uppercase block font-mono-custom mb-1">LIVE DEPLOYMENT</span>
+              <a
+                href={result.deployment_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm font-bold text-[var(--lime)] hover:text-white transition-colors font-mono-custom"
+              >
+                {result.deployment_link.replace(/^https?:\/\//, '')}
+                <ExternalLink size={14} />
+              </a>
+            </div>
+          )}
 
           {/* Share CTA */}
           <button

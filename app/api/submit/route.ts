@@ -15,7 +15,7 @@ function parseGithubUrl(url: string) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { github_url } = await req.json();
+    const { github_url, team_name, deployment_link } = await req.json();
     if (!github_url || !github_url.includes('github.com')) {
       return NextResponse.json({ error: 'Please enter a valid GitHub repository URL.' }, { status: 400 });
     }
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           repoUrl: github_url,
-          teamName: `Team ${repo_name}`,
+          teamName: team_name || `Team ${repo_name}`,
           email: 'participant@hackarena.com'
         })
       });
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
         }
       } else {
         // Needs client-side polling. Immediately return the status to client.
-        return NextResponse.json({ id: submissionId, status: 'analyzing', repo_name, owner, github_url });
+        return NextResponse.json({ id: submissionId, status: 'analyzing', repo_name, owner, github_url, team_name, deployment_link });
       }
     } else {
       // If no background ID returned, check if score was returned directly
@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
             // New score is better, update the DB
             const { data, error } = await supabase
               .from('submissions')
-              .update({ score, repo_name, owner })
+              .update({ score, repo_name, owner, team_name: team_name || existing.team_name, deployment_link: deployment_link || existing.deployment_link })
               .eq('github_url', github_url)
               .select();
             
@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
           // No existing submission, insert new
           const { data, error } = await supabase
             .from('submissions')
-            .insert([{ github_url, repo_name, owner, score }])
+            .insert([{ github_url, repo_name, owner, score, team_name: team_name || '', deployment_link: deployment_link || '' }])
             .select();
           
           if (error) {
@@ -162,6 +162,8 @@ export async function POST(req: NextRequest) {
       repo_name,
       owner,
       github_url,
+      team_name: team_name || '',
+      deployment_link: deployment_link || '',
       dbData,
       dbError,
       isMock: false
@@ -176,6 +178,8 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
     const github_url = searchParams.get('github_url');
+    const team_name = searchParams.get('team_name') || '';
+    const deployment_link = searchParams.get('deployment_link') || '';
     
     if (!id) {
       return NextResponse.json({ error: 'Missing submission ID' }, { status: 400 });
@@ -240,7 +244,7 @@ export async function GET(req: NextRequest) {
           if (score > existingScore) {
             const { data, error } = await supabase
               .from('submissions')
-              .update({ score, repo_name, owner })
+              .update({ score, repo_name, owner, team_name: team_name || existing.team_name, deployment_link: deployment_link || existing.deployment_link })
               .eq('github_url', repoUrl)
               .select();
             
@@ -258,7 +262,7 @@ export async function GET(req: NextRequest) {
         } else {
           const { data, error } = await supabase
             .from('submissions')
-            .insert([{ github_url: repoUrl, repo_name, owner, score }])
+            .insert([{ github_url: repoUrl, repo_name, owner, score, team_name: team_name || '', deployment_link: deployment_link || '' }])
             .select();
           
           if (error) dbError = error.message;
@@ -283,6 +287,8 @@ export async function GET(req: NextRequest) {
       repo_name,
       owner,
       github_url: repoUrl,
+      team_name,
+      deployment_link,
       dbData,
       dbError,
       isMock: false
