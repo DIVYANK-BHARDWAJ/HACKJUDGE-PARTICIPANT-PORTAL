@@ -136,10 +136,10 @@ export default function ResultTab({
             )}
           </div>
 
-          {/* Team Name */}
+          {/* Name */}
           {result.team_name && (
             <div className="pt-2">
-              <span className="text-xs text-[var(--text3)] uppercase block font-mono-custom mb-1">TEAM</span>
+              <span className="text-xs text-[var(--text3)] uppercase block font-mono-custom mb-1">NAME</span>
               <span className="text-sm font-bold text-white font-mono-custom">{result.team_name}</span>
             </div>
           )}

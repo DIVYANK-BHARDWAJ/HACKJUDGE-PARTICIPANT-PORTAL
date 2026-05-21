@@ -139,7 +139,7 @@ export default function SubmitTab({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!teamName.trim()) {
-      addToast('Please enter your team name.', 'error');
+      addToast('Please enter your name.', 'error');
       return;
     }
     if (!repoUrl || !repoUrl.trim().startsWith('https://github.com/')) {
@@ -291,16 +291,16 @@ export default function SubmitTab({
           <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[var(--accent)] to-[var(--cyan)]" />
           
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Team Name */}
+            {/* Name */}
             <div className="space-y-2">
               <label className="block text-xs font-medium uppercase tracking-widest text-[var(--text3)] font-mono-custom">
-                → TEAM NAME
+                → NAME
               </label>
               <input
                 type="text"
                 required
                 disabled={isEvaluating}
-                placeholder="e.g. Team Nexus"
+                placeholder="e.g. Divyank Bhardwaj"
                 value={teamName}
                 onChange={(e) => setTeamName(e.target.value)}
                 className="w-full bg-[var(--surface2)] border border-[var(--border)] rounded-lg px-4 py-3 text-sm md:text-base font-mono-custom text-[var(--text)] placeholder-[var(--text3)] focus:outline-none focus:border-[var(--accent)] transition-colors disabled:opacity-60"
