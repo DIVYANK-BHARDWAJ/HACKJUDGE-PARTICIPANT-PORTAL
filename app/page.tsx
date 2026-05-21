@@ -46,14 +46,27 @@ export default function Home() {
         setIsOrganizer(true);
       }
     }
-    // End time initialization
-    const savedEndTime = localStorage.getItem('hackarena_end_time');
-    const defaultEndTime = process.env.VITE_HACKATHON_END_TIME || '2026-05-21T12:30:00Z';
-    setEndTime(savedEndTime || defaultEndTime);
 
-    // Freeze state initialization
-    const savedFreeze = localStorage.getItem('hackarena_is_frozen');
-    setIsFrozen(savedFreeze === 'true');
+    // Fetch shared config (end time + freeze) from server — this is the source of truth
+    // so ALL browsers see the admin's latest settings, not just the admin's own localStorage.
+    fetch('/api/config')
+      .then(r => r.json())
+      .then(cfg => {
+        if (cfg.endTime) {
+          setEndTime(cfg.endTime);
+          localStorage.setItem('hackarena_end_time', cfg.endTime);
+        }
+        setIsFrozen(!!cfg.isFrozen);
+        localStorage.setItem('hackarena_is_frozen', cfg.isFrozen ? 'true' : 'false');
+      })
+      .catch(() => {
+        // Fallback: read from localStorage if network fails
+        const savedEndTime = localStorage.getItem('hackarena_end_time');
+        const defaultEndTime = '2026-05-21T12:30:00Z';
+        setEndTime(savedEndTime || defaultEndTime);
+        const savedFreeze = localStorage.getItem('hackarena_is_frozen');
+        setIsFrozen(savedFreeze === 'true');
+      });
 
     // Local submissions seed check
     const localSaved = localStorage.getItem('hackarena_submissions');
@@ -160,12 +173,26 @@ export default function Home() {
   const handleSetIsFrozen = (frozen: boolean) => {
     setIsFrozen(frozen);
     localStorage.setItem('hackarena_is_frozen', frozen ? 'true' : 'false');
+    // Persist to shared server config so all participants see the freeze state
+    const password = localStorage.getItem('hackarena_admin_pass') || 'admin';
+    fetch('/api/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password, isFrozen: frozen })
+    }).catch(err => console.warn('[Config] Failed to persist freeze state:', err));
     addToast(`Leaderboard is now ${frozen ? 'FROZEN' : 'ACTIVE'}.`, frozen ? 'error' : 'success');
   };
 
   const handleSetEndTime = (time: string) => {
     setEndTime(time);
     localStorage.setItem('hackarena_end_time', time);
+    // Persist to shared server config so ALL participants see the updated end time
+    const password = localStorage.getItem('hackarena_admin_pass') || 'admin';
+    fetch('/api/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password, endTime: time })
+    }).catch(err => console.warn('[Config] Failed to persist end time:', err));
   };
 
   const handleDeleteSubmission = async (id: string) => {

@@ -20,6 +20,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Please enter a valid GitHub repository URL.' }, { status: 400 });
     }
 
+    // Fetch deadline from config DB (or fallback)
+    const defaultEndTime = process.env.VITE_HACKATHON_END_TIME || '2026-05-21T12:30:00Z';
+    const isPlaceholder = process.env.VITE_SUPABASE_URL?.includes('placeholder');
+    let endTimeStr = defaultEndTime;
+
+    if (!isPlaceholder) {
+      try {
+        const { data: configData } = await supabase
+          .from('config')
+          .select('value')
+          .eq('key', 'end_time')
+          .maybeSingle();
+
+        if (configData?.value) {
+          endTimeStr = configData.value;
+        }
+      } catch (err) {
+        console.warn('[API Proxy] Error fetching config for deadline check:', err);
+      }
+    }
+
+    const deadline = new Date(endTimeStr).getTime();
+    if (Date.now() > deadline) {
+      return NextResponse.json({ error: 'sorry you submitted after the deadline' }, { status: 400 });
+    }
+
     const { name: repo_name, owner } = parseGithubUrl(github_url);
 
     // Call Judging Engine API
@@ -94,7 +120,6 @@ export async function POST(req: NextRequest) {
     let dbError = null;
     let highScore = score;
     let improved = true;
-    const isPlaceholder = process.env.VITE_SUPABASE_URL?.includes('placeholder');
 
     if (!isPlaceholder) {
       try {

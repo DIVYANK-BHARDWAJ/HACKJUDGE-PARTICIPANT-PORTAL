@@ -173,7 +173,7 @@ export default function SubmitTab({
     // Check if hackathon has ended
     const targetTime = new Date(endTime).getTime();
     if (Date.now() > targetTime) {
-      addToast('The arena is closed. Submissions are no longer accepted.', 'error');
+      addToast('sorry you submitted after the deadline', 'error');
       return;
     }
 
