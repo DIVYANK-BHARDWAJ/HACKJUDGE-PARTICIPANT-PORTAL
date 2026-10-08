@@ -38,11 +38,14 @@ export default function Home() {
 
   // Load configuration and cached submissions on mount
   useEffect(() => {
-    // Check organizer access query parameters
+    // Check organizer access query parameters or pathname
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
-      if (params.get('organizer') === 'true' || params.get('admin') === 'true') {
+      if (params.get('organizer') === 'true' || params.get('admin') === 'true' || window.location.pathname === '/admin') {
         setIsOrganizer(true);
+        if (window.location.pathname === '/admin') {
+          setActiveTab('admin');
+        }
       }
     }
 
