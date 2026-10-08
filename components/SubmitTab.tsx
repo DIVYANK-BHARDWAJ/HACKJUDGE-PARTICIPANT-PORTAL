@@ -364,11 +364,12 @@ export default function SubmitTab({
             {/* Prompt.md File Upload */}
             <div className="space-y-2">
               <label className="block text-xs font-medium uppercase tracking-widest text-[var(--text3)] font-mono-custom">
-                → PROMPT.MD (OPTIONAL)
+                → PROMPT.MD
               </label>
               <input
                 type="file"
                 accept=".md"
+                required
                 disabled={isEvaluating}
                 onChange={handleFileChange}
                 className="w-full bg-[var(--surface2)] border border-[var(--border)] rounded-lg px-4 py-3 text-sm md:text-base font-mono-custom text-[var(--text)] focus:outline-none focus:border-[var(--accent)] transition-colors disabled:opacity-60 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[var(--accent)] file:text-white hover:file:bg-[var(--accent2)] cursor-pointer"
