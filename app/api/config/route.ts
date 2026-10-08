@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET() {
@@ -12,7 +13,7 @@ export async function GET() {
       return NextResponse.json({ endTime: defaultEndTime, isFrozen: false });
     }
 
-    const res = await fetch(`${rawEngineUrl}/api/config`);
+    const res = await fetch(`${rawEngineUrl}/api/config`, { cache: 'no-store' });
     if (!res.ok) {
       throw new Error("Failed to fetch from engine");
     }
