@@ -27,6 +27,8 @@ export default function SubmitTab({
   const [repoUrl, setRepoUrl] = useState('');
   const [teamName, setTeamName] = useState('');
   const [deploymentLink, setDeploymentLink] = useState('');
+  const [promptFile, setPromptFile] = useState<File | null>(null);
+  const [promptContent, setPromptContent] = useState<string>('');
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [currentStageIndex, setCurrentStageIndex] = useState(0);
   const [progressSegments, setProgressSegments] = useState<boolean[]>([false, false, false, false, false]);
@@ -194,7 +196,8 @@ export default function SubmitTab({
         body: JSON.stringify({
           github_url: repoUrl.trim(),
           team_name: teamName.trim(),
-          deployment_link: deploymentLink.trim()
+          deployment_link: deploymentLink.trim(),
+          prompt_content: promptContent
         })
       });
       const data = await response.json();
@@ -253,6 +256,25 @@ export default function SubmitTab({
       return parts.pop() || 'Repository';
     } catch {
       return 'repository';
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.name.endsWith('.md')) {
+        addToast('Please upload a valid .md file.', 'error');
+        return;
+      }
+      setPromptFile(file);
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        setPromptContent(evt.target?.result as string);
+      };
+      reader.readAsText(file);
+    } else {
+      setPromptFile(null);
+      setPromptContent('');
     }
   };
 
@@ -336,6 +358,20 @@ export default function SubmitTab({
                 value={deploymentLink}
                 onChange={(e) => setDeploymentLink(e.target.value)}
                 className="w-full bg-[var(--surface2)] border border-[var(--border)] rounded-lg px-4 py-3 text-sm md:text-base font-mono-custom text-[var(--text)] placeholder-[var(--text3)] focus:outline-none focus:border-[var(--accent)] transition-colors disabled:opacity-60"
+              />
+            </div>
+
+            {/* Prompt.md File Upload */}
+            <div className="space-y-2">
+              <label className="block text-xs font-medium uppercase tracking-widest text-[var(--text3)] font-mono-custom">
+                → PROMPT.MD (OPTIONAL)
+              </label>
+              <input
+                type="file"
+                accept=".md"
+                disabled={isEvaluating}
+                onChange={handleFileChange}
+                className="w-full bg-[var(--surface2)] border border-[var(--border)] rounded-lg px-4 py-3 text-sm md:text-base font-mono-custom text-[var(--text)] focus:outline-none focus:border-[var(--accent)] transition-colors disabled:opacity-60 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[var(--accent)] file:text-white hover:file:bg-[var(--accent2)] cursor-pointer"
               />
             </div>
 

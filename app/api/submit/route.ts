@@ -14,7 +14,7 @@ function parseGithubUrl(url: string) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { github_url, team_name, deployment_link } = await req.json();
+    const { github_url, team_name, deployment_link, prompt_content } = await req.json();
     if (!github_url || !github_url.includes('github.com')) {
       return NextResponse.json({ error: 'Please enter a valid GitHub repository URL.' }, { status: 400 });
     }
@@ -51,7 +51,8 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({ 
           repoUrl: github_url,
           teamName: team_name || `Team ${repo_name}`,
-          email: 'participant@hackarena.com'
+          email: 'participant@hackarena.com',
+          promptContent: prompt_content
         })
       });
 
