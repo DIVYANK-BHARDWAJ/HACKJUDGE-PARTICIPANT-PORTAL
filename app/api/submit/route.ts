@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
     }
 
     const submissionId = analyzeData.id;
-    let status = analyzeData.status || 'analyzing';
+    const status = analyzeData.status || 'analyzing';
 
     if (submissionId) {
       const resultUrl = `${rawEngineUrl}/api/result/${submissionId}`;

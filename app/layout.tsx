@@ -1,22 +1,23 @@
 import type { Metadata } from "next";
-import { Syne, DM_Mono } from "next/font/google";
+import { Montserrat, Orbitron } from "next/font/google";
 import "./globals.css";
+import AtmosphereBackground from "@/components/AtmosphereBackground";
 
-const syne = Syne({
-  variable: "--font-syne",
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  weight: ["300", "400", "500", "600"],
 });
 
-const dmMono = DM_Mono({
-  variable: "--font-dm-mono",
+const orbitron = Orbitron({
+  variable: "--font-orbitron",
   subsets: ["latin"],
-  weight: ["300", "400", "500"],
+  weight: ["400", "700", "900"],
 });
 
 export const metadata: Metadata = {
-  title: "HACK ARENA // Build. Submit. Dominate.",
-  description: "Dynamic submission and live ranking standings for hackathon innovators.",
+  title: "PROTOCOL X | Participant Portal",
+  description: "A PROMPT ENGINEERING CHALLENGE. Submit your protocol to the arena.",
 };
 
 export default function RootLayout({
@@ -25,12 +26,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${syne.variable} ${dmMono.variable}`}>
+    <html lang="en" className={`${montserrat.variable} ${orbitron.variable}`}>
       <body>
-        <div className="noise-overlay" />
-        <div className="glow-orb glow-violet" />
-        <div className="glow-orb glow-cyan" />
-        <div className="relative z-10">
+        <AtmosphereBackground />
+        <div className="relative z-10 flex flex-col min-h-screen">
           {children}
         </div>
       </body>

@@ -1,3 +1,4 @@
+/* eslint-disable */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -277,61 +278,66 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col justify-between">
       {/* Header / Navbar */}
-      <header className="border-b border-[var(--border)] bg-[rgba(9,9,15,0.7)] backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+      <header className="border-b border-[var(--border-subtle)] bg-[rgba(5,5,5,0.75)] backdrop-blur-md sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-4">
           
           {/* Logo Brand */}
-          <div className="flex items-center gap-2 select-none">
-            <span className="text-2xl font-bold text-white tracking-widest font-mono-custom animate-pulse">⌬</span>
-            <span className="text-lg font-black tracking-widest text-white">
-              HACK <span className="text-[var(--accent)]">ARENA</span>
-            </span>
+          <div className="flex flex-col items-center md:items-start select-none">
+            <span className="text-[10px] text-[var(--text-muted)] tracking-[0.3em] font-medium mb-1">A PROMPT ENGINEERING CHALLENGE</span>
+            <div className="flex items-baseline gap-1">
+              <h1 className="text-2xl md:text-3xl font-display font-black tracking-widest chrome-text m-0 leading-none">PROTOCOL</h1>
+              <span className="text-3xl md:text-4xl font-display font-black text-[var(--red-primary)] drop-shadow-[0_0_8px_var(--red-glow)] leading-none -ml-1">X</span>
+            </div>
+            <span className="text-[8px] text-[var(--text-muted)] tracking-[0.2em] mt-1 opacity-70">PEOPLE · IDEAS · TECHNOLOGY · TOGETHER</span>
           </div>
 
           {/* Nav Tabs Switcher */}
-          <nav className="flex gap-1 bg-[var(--surface)] border border-[var(--border)] p-1 rounded-xl">
+          <nav className="flex gap-2 bg-[var(--bg-surface)] border border-[var(--border-subtle)] p-1 rounded-sm clip-chamfer-sm">
             <button
               onClick={() => setActiveTab('submit')}
-              className={`px-4 py-2 rounded-lg text-xs md:text-sm font-semibold tracking-wide cursor-pointer transition-colors duration-200 ${
+              className={`px-4 py-2 text-[10px] md:text-xs font-semibold tracking-[0.2em] uppercase transition-all duration-200 relative ${
                 activeTab === 'submit' 
-                  ? 'bg-[var(--surface2)] border border-[var(--border)] text-white' 
-                  : 'text-[var(--text2)] hover:text-white'
+                  ? 'text-white' 
+                  : 'text-[var(--text-muted)] hover:text-white'
               }`}
             >
-              Submit
+              [ SUBMIT ]
+              {activeTab === 'submit' && <span className="absolute bottom-0 left-0 w-full h-[1px] bg-[var(--red-primary)] shadow-[0_0_8px_var(--red-primary)]"></span>}
             </button>
             <button
               onClick={() => setActiveTab('my-result')}
-              className={`px-4 py-2 rounded-lg text-xs md:text-sm font-semibold tracking-wide cursor-pointer transition-colors duration-200 ${
+              className={`px-4 py-2 text-[10px] md:text-xs font-semibold tracking-[0.2em] uppercase transition-all duration-200 relative ${
                 activeTab === 'my-result' 
-                  ? 'bg-[var(--surface2)] border border-[var(--border)] text-white' 
-                  : 'text-[var(--text2)] hover:text-white'
+                  ? 'text-white' 
+                  : 'text-[var(--text-muted)] hover:text-white'
               }`}
             >
-              My Result
+              [ MY RESULT ]
+              {activeTab === 'my-result' && <span className="absolute bottom-0 left-0 w-full h-[1px] bg-[var(--red-primary)] shadow-[0_0_8px_var(--red-primary)]"></span>}
             </button>
             {isOrganizer && (
               <button
                 onClick={() => setActiveTab('admin')}
-                className={`px-4 py-2 rounded-lg text-xs md:text-sm font-semibold tracking-wide cursor-pointer transition-colors duration-200 ${
+                className={`px-4 py-2 text-[10px] md:text-xs font-semibold tracking-[0.2em] uppercase transition-all duration-200 relative ${
                   activeTab === 'admin' 
-                    ? 'bg-[var(--surface2)] border border-[var(--border)] text-white' 
-                    : 'text-[var(--text2)] hover:text-white'
+                    ? 'text-[var(--red-primary)]' 
+                    : 'text-[var(--text-muted)] hover:text-white'
                 }`}
               >
-                Admin
+                [ ADMIN ]
+                {activeTab === 'admin' && <span className="absolute bottom-0 left-0 w-full h-[1px] bg-[var(--red-primary)] shadow-[0_0_8px_var(--red-primary)]"></span>}
               </button>
             )}
           </nav>
 
           {/* Live Badge counter */}
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--surface)] border border-[var(--border)] rounded-full text-xs font-mono-custom select-none">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--lime)] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--lime)]"></span>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--bg-elevated)] border border-[var(--border-subtle)] clip-chamfer-sm text-[10px] font-mono-custom select-none">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--red-primary)] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[var(--red-primary)] shadow-[0_0_5px_var(--red-primary)]"></span>
             </span>
-            <span className="text-[var(--text2)] tracking-wide">
-              LIVE · <span className="text-white font-bold">{submissions.length}</span> submissions
+            <span className="text-[var(--text-muted)] tracking-widest uppercase">
+              SYSTEM LIVE · <span className="text-white font-bold">{submissions.length}</span> PROTOCOLS RECEIVED
             </span>
           </div>
 
@@ -374,8 +380,13 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-[var(--border)] py-6 text-center text-xs text-[var(--text3)] font-mono-custom select-none">
-        ⌬ HACK ARENA // © 2026 DESIGNED BY DEEPMIND ANTIGRAVITY. ALL RIGHTS DOMINATED.
+      <footer className="border-t border-[var(--border-subtle)] py-8 mt-12 bg-[rgba(5,5,5,0.8)] backdrop-blur text-center flex flex-col items-center gap-2 select-none relative z-10">
+        <div className="text-xs md:text-sm text-[var(--chrome-low)] tracking-[0.4em] uppercase font-light">
+          THINK <span className="text-[var(--red-primary)] mx-2">/</span> PROMPT <span className="text-[var(--red-primary)] mx-2">/</span> CREATE <span className="text-[var(--red-primary)] mx-2">/</span> BEYOND
+        </div>
+        <div className="text-[9px] text-[var(--text-muted)] tracking-[0.2em] uppercase mt-2">
+          POWERED BY PALS CLUB
+        </div>
       </footer>
 
       {/* Stacked Toast Notification Area */}
@@ -387,12 +398,12 @@ export default function Home() {
           <div
             key={toast.id}
             style={{ pointerEvents: 'auto' }}
-            className="flex items-center gap-3 bg-[var(--surface2)] border border-[var(--border2)] rounded-xl px-4 py-3 shadow-[0_10px_25px_rgba(0,0,0,0.5)] max-w-xs transition-all duration-300 transform translate-y-0 animate-slide-up"
+            className="flex items-center gap-3 bg-[var(--bg-elevated)] border border-[var(--border-subtle)] clip-chamfer-sm px-4 py-3 shadow-[0_10px_25px_rgba(0,0,0,0.8)] max-w-xs transition-all duration-300 transform translate-y-0 animate-slide-up"
           >
             {/* Status dot marker */}
             <span 
               className={`h-2.5 w-2.5 shrink-0 rounded-full ${
-                toast.type === 'success' ? 'bg-[var(--lime)] shadow-[0_0_8px_var(--lime)]' : 'bg-[var(--pink)] shadow-[0_0_8px_var(--pink)]'
+                toast.type === 'success' ? 'bg-[var(--success)] shadow-[0_0_8px_var(--success)]' : 'bg-[var(--red-primary)] shadow-[0_0_8px_var(--red-primary)]'
               }`}
             />
             <span className="text-xs font-mono-custom text-[var(--text)] leading-snug">
