@@ -113,14 +113,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       status: 'complete',
       score,
-      highScore,
-      improved,
+      highScore: score,
+      improved: true,
       repo_name,
       owner,
       github_url,
       team_name: team_name || '',
       deployment_link: deployment_link || '',
-      dbData,
+      dbData: null,
       dbError,
       isMock: false
     });
@@ -184,17 +184,21 @@ export async function GET(req: NextRequest) {
       dbError = err.message;
     }
 
+    const score = parseFloat(resultData.scoreTotal || 0);
+    const repoUrl = resultData.repoUrl || github_url || '';
+    const { name: repo_name, owner } = parseGithubUrl(repoUrl);
+
     return NextResponse.json({
       status: 'complete',
       score,
-      highScore,
-      improved,
+      highScore: score,
+      improved: true,
       repo_name,
       owner,
       github_url: repoUrl,
       team_name,
       deployment_link,
-      dbData,
+      dbData: null,
       dbError,
       isMock: false
     });
