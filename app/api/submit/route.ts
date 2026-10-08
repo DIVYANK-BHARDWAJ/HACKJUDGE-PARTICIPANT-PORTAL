@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
 
 function parseGithubUrl(url: string) {
   try {
@@ -20,28 +19,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Please enter a valid GitHub repository URL.' }, { status: 400 });
     }
 
-    // Fetch deadline from config DB (or fallback)
     const defaultEndTime = process.env.VITE_HACKATHON_END_TIME || '2026-05-21T12:30:00Z';
-    const isPlaceholder = process.env.VITE_SUPABASE_URL?.includes('placeholder');
-    let endTimeStr = defaultEndTime;
-
-    if (!isPlaceholder) {
-      try {
-        const { data: configData } = await supabase
-          .from('config')
-          .select('value')
-          .eq('key', 'end_time')
-          .maybeSingle();
-
-        if (configData?.value) {
-          endTimeStr = configData.value;
-        }
-      } catch (err) {
-        console.warn('[API Proxy] Error fetching config for deadline check:', err);
-      }
-    }
-
-    const deadline = new Date(endTimeStr).getTime();
+    const deadline = new Date(defaultEndTime).getTime();
     if (Date.now() > deadline) {
       return NextResponse.json({ error: 'sorry you submitted after the deadline' }, { status: 400 });
     }
@@ -115,68 +94,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Judging engine returned a score of 0.' }, { status: 500 });
     }
 
-    // Try storing in Supabase
-    let dbData = null;
+    // Push to leaderboard directly via judging engine
     let dbError = null;
-    let highScore = score;
-    let improved = true;
-
-    if (!isPlaceholder) {
-      try {
-        // Fetch existing submission if any to compare scores
-        const { data: existing, error: fetchError } = await supabase
-          .from('submissions')
-          .select('*')
-          .eq('github_url', github_url)
-          .maybeSingle();
-
-        if (fetchError) {
-          console.warn('[API Proxy] Error fetching existing submission:', fetchError.message);
-        }
-
-        if (existing) {
-          const existingScore = parseFloat(existing.score);
-          if (score > existingScore) {
-            // New score is better, update the DB
-            const { data, error } = await supabase
-              .from('submissions')
-              .update({ score, repo_name, owner, team_name: team_name || existing.team_name, deployment_link: deployment_link || existing.deployment_link })
-              .eq('github_url', github_url)
-              .select();
-            
-            if (error) {
-              dbError = error.message;
-            } else {
-              dbData = data;
-              highScore = score;
-              improved = true;
-            }
-          } else {
-            // Existing score is better or equal, do not update score in DB
-            dbData = [existing];
-            highScore = existingScore;
-            improved = false;
-          }
-        } else {
-          // No existing submission, insert new
-          const { data, error } = await supabase
-            .from('submissions')
-            .insert([{ github_url, repo_name, owner, score, team_name: team_name || '', deployment_link: deployment_link || '' }])
-            .select();
-          
-          if (error) {
-            dbError = error.message;
-          } else {
-            dbData = data;
-            highScore = score;
-            improved = true;
-          }
-        }
-      } catch (err: any) {
-        dbError = err.message;
+    try {
+      const pushUrl = `${rawEngineUrl}/api/results/push`;
+      const pushRes = await fetch(pushUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: submissionId })
+      });
+      if (!pushRes.ok) {
+        dbError = 'Failed to push to Neon DB leaderboard';
       }
-    } else {
-      dbError = 'Supabase keys are placeholders. Storing submission in local fallback.';
+    } catch (err: any) {
+      dbError = err.message;
     }
 
     return NextResponse.json({
@@ -237,71 +168,20 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ id, status, errorMessage: resultData.errorMessage || null });
     }
 
-    // Since status is complete, save/upsert in Supabase!
-    const score = parseFloat(resultData.scoreTotal || 0);
-    if (score === 0) {
-      return NextResponse.json({ error: 'Judging engine returned a score of 0.' }, { status: 500 });
-    }
-
-    const repoUrl = github_url || resultData.repoUrl;
-    if (!repoUrl) {
-      return NextResponse.json({ error: 'Missing github url.' }, { status: 400 });
-    }
-
-    const { name: repo_name, owner } = parseGithubUrl(repoUrl);
-
-    let dbData = null;
+    // Call Judging Engine API to push to leaderboard
     let dbError = null;
-    let highScore = score;
-    let improved = true;
-    const isPlaceholder = process.env.VITE_SUPABASE_URL?.includes('placeholder');
-
-    if (!isPlaceholder) {
-      try {
-        const { data: existing, error: fetchError } = await supabase
-          .from('submissions')
-          .select('*')
-          .eq('github_url', repoUrl)
-          .maybeSingle();
-
-        if (existing) {
-          const existingScore = parseFloat(existing.score);
-          if (score > existingScore) {
-            const { data, error } = await supabase
-              .from('submissions')
-              .update({ score, repo_name, owner, team_name: team_name || existing.team_name, deployment_link: deployment_link || existing.deployment_link })
-              .eq('github_url', repoUrl)
-              .select();
-            
-            if (error) dbError = error.message;
-            else {
-              dbData = data;
-              highScore = score;
-              improved = true;
-            }
-          } else {
-            dbData = [existing];
-            highScore = existingScore;
-            improved = false;
-          }
-        } else {
-          const { data, error } = await supabase
-            .from('submissions')
-            .insert([{ github_url: repoUrl, repo_name, owner, score, team_name: team_name || '', deployment_link: deployment_link || '' }])
-            .select();
-          
-          if (error) dbError = error.message;
-          else {
-            dbData = data;
-            highScore = score;
-            improved = true;
-          }
-        }
-      } catch (err: any) {
-        dbError = err.message;
+    try {
+      const pushUrl = `${rawEngineUrl}/api/results/push`;
+      const pushRes = await fetch(pushUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      });
+      if (!pushRes.ok) {
+        dbError = 'Failed to push to Neon DB leaderboard';
       }
-    } else {
-      dbError = 'Supabase keys are placeholders. Storing submission in local fallback.';
+    } catch (err: any) {
+      dbError = err.message;
     }
 
     return NextResponse.json({

@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
 import SubmitTab from '@/components/SubmitTab';
 import ResultTab from '@/components/ResultTab';
 import AdminTab from '@/components/AdminTab';
@@ -85,26 +84,18 @@ export default function Home() {
     fetchStandings();
   }, []);
 
-  // Fetch standings either from Supabase or LocalStorage
+  // Fetch standings from API proxy or LocalStorage
   const fetchStandings = async () => {
-    const isPlaceholder = process.env.VITE_SUPABASE_URL?.includes('placeholder');
-    
-    if (!isPlaceholder) {
-      try {
-        const { data, error } = await supabase
-          .from('submissions')
-          .select('*')
-          .order('score', { ascending: false });
-
-        if (!error && data) {
-          setSubmissions(data);
-          // Sync database data into local cache
-          localStorage.setItem('hackarena_submissions', JSON.stringify(data));
-          return;
-        }
-      } catch (err) {
-        console.warn('Database fetch failed. Using local storage.', err);
+    try {
+      const res = await fetch('/api/results');
+      if (res.ok) {
+        const data = await res.json();
+        setSubmissions(data.results || []);
+        localStorage.setItem('hackarena_submissions', JSON.stringify(data.results || []));
+        return;
       }
+    } catch (err) {
+      console.warn('API fetch failed. Using local storage.', err);
     }
 
     // Fallback: Read local storage cache
