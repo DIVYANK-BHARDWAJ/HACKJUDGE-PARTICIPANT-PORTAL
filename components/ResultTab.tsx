@@ -13,6 +13,14 @@ interface ResultData {
   score: number;
   latest_score?: number;
   improved?: boolean;
+  scoreSecurity?: number;
+  scoreCodeQuality?: number;
+  scoreInnovation?: number;
+  scoreUiUx?: number;
+  scoreBackend?: number;
+  scoreCommits?: number;
+  scoreDocumentation?: number;
+  scorePrompt?: number;
 }
 
 interface ResultTabProps {
