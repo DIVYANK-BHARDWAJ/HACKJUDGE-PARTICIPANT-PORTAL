@@ -149,10 +149,6 @@ export default function SubmitTab({
       addToast('Please input a valid public GitHub URL (https://github.com/username/repo)', 'error');
       return;
     }
-    if (!deploymentLink.trim()) {
-      addToast('Please enter your deployment link.', 'error');
-      return;
-    }
 
     // Check submission count for this repository
     let repoKey = repoUrl.trim().toLowerCase();
@@ -387,9 +383,8 @@ export default function SubmitTab({
               </label>
               <input
                 type="url"
-                required
                 disabled={isEvaluating}
-                placeholder="https://your-project.vercel.app"
+                placeholder="https://your-project.vercel.app (Optional)"
                 value={deploymentLink}
                 onChange={(e) => setDeploymentLink(e.target.value)}
                 className="w-full bg-[var(--bg-void)] border border-[var(--border-subtle)] px-4 py-3 text-sm font-mono-custom text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--red-primary)] focus:shadow-[0_0_10px_var(--red-glow)] transition-all disabled:opacity-60"
