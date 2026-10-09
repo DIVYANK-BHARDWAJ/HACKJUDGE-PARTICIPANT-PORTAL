@@ -164,8 +164,8 @@ export default function SubmitTab({
 
     const counts = JSON.parse(localStorage.getItem('hackarena_submission_counts') || '{}');
     const currentCount = counts[repoKey] || 0;
-    if (currentCount >= 2) {
-      addToast('you cannot submit to arena more than 2 times', 'error');
+    if (currentCount >= 3) {
+      addToast('you cannot submit to arena more than 3 times', 'error');
       return;
     }
 
