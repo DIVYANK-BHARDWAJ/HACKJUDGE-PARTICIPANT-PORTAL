@@ -48,13 +48,6 @@ export async function POST(req: NextRequest) {
     const { name: repo_name, owner } = parseGithubUrl(github_url);
 
     // Call Judging Engine API
-    let rawEngineUrl = process.env.VITE_JUDGING_ENGINE_URL || '';
-    
-    // Clean trailing slash if present
-    if (rawEngineUrl.endsWith('/')) {
-      rawEngineUrl = rawEngineUrl.slice(0, -1);
-    }
-
     if (!rawEngineUrl || rawEngineUrl.includes('placeholder')) {
       return NextResponse.json({ error: 'Judging engine URL is not configured. Please contact the administrator.' }, { status: 500 });
     }
