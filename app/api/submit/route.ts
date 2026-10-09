@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 import { NextRequest, NextResponse } from 'next/server';
 
 function parseGithubUrl(url: string) {
@@ -75,7 +77,7 @@ export async function POST(req: NextRequest) {
 
       if (status === 'complete') {
         // Cached complete hit: Fetch score directly
-        const resultRes = await fetch(resultUrl);
+        const resultRes = await fetch(resultUrl, { cache: 'no-store' });
         if (resultRes.ok) {
           const resultData = await resultRes.json();
           score = parseFloat(resultData.scoreTotal || 0);
@@ -162,7 +164,7 @@ export async function GET(req: NextRequest) {
     }
 
     const resultUrl = `${rawEngineUrl}/api/result/${id}`;
-    const resultRes = await fetch(resultUrl);
+    const resultRes = await fetch(resultUrl, { cache: 'no-store' });
     
     if (!resultRes.ok) {
       const errData = await resultRes.json().catch(() => ({}));

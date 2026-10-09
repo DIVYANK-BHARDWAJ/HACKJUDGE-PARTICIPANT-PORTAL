@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 import { NextResponse } from 'next/server';
 
 export async function GET() {
@@ -11,7 +13,7 @@ export async function GET() {
       return NextResponse.json({ results: [] });
     }
 
-    const res = await fetch(`${rawEngineUrl}/api/results?evaluation=true`);
+    const res = await fetch(`${rawEngineUrl}/api/results?evaluation=true`, { cache: 'no-store' });
     if (!res.ok) {
       return NextResponse.json({ results: [] });
     }
