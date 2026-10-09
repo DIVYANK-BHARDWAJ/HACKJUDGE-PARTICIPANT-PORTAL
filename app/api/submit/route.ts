@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Please enter a valid GitHub repository URL.' }, { status: 400 });
     }
 
-    const defaultEndTime = process.env.VITE_HACKATHON_END_TIME || '2026-05-21T12:30:00Z';
+    const defaultEndTime = process.env.VITE_HACKATHON_END_TIME || '2026-08-09T12:30:00Z';
     const deadline = new Date(defaultEndTime).getTime();
     if (Date.now() > deadline) {
       return NextResponse.json({ error: 'sorry you submitted after the deadline' }, { status: 400 });

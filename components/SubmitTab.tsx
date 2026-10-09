@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowRight, Info, Loader2, Sparkles, Users, Brain, Trophy, Lightbulb, UploadCloud, X as XIcon, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, Info, Loader2, Sparkles, User, Brain, Trophy, Lightbulb, UploadCloud, X as XIcon, CheckCircle2 } from 'lucide-react';
 
 interface SubmitTabProps {
   onSubmissionSuccess: (result: any) => void;
@@ -299,10 +299,10 @@ export default function SubmitTab({
         {/* 4 Info Tiles */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
           <div className="bg-[var(--bg-elevated)] border border-[var(--border-subtle)] clip-chamfer-sm p-4 flex flex-col items-center gap-2 text-center transition-all hover:border-[var(--red-primary)] hover:shadow-glow">
-            <Users size={20} className="text-[var(--text-muted)]" />
+            <User size={20} className="text-[var(--text-muted)]" />
             <div className="flex flex-col">
-              <span className="text-xs font-bold tracking-[0.2em] text-white">TEAMS</span>
-              <span className="text-[9px] font-mono-custom text-[var(--text-muted)] uppercase">2–4 MEMBERS</span>
+              <span className="text-xs font-bold tracking-[0.2em] text-white">INDIVIDUAL</span>
+              <span className="text-[9px] font-mono-custom text-[var(--text-muted)] uppercase">1 PARTICIPANT</span>
             </div>
           </div>
           <div className="bg-[var(--bg-elevated)] border border-[var(--border-subtle)] clip-chamfer-sm p-4 flex flex-col items-center gap-2 text-center transition-all hover:border-[var(--red-primary)] hover:shadow-glow">
