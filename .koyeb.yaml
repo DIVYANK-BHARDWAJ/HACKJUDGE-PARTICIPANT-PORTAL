@@ -18,7 +18,7 @@ services:
         port: 3000
     regions:
       - fra # Europe (Frankfurt) - free tier eligible region
-    instance_type: nano # Free tier nano instance (512MB RAM, 0.1 vCPU)
+    instance_type: small # Upgraded for hackathon day: 1 vCPU, 2GB RAM handles 300 concurrent users. Switch back to nano after event to save cost.
     env:
       - key: PORT
         value: "3000"

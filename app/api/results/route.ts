@@ -25,6 +25,14 @@ export async function GET() {
       team_name: s.teamName,
       score: s.scoreTotal,
       submitted_at: s.createdAt,
+      scoreSecurity: s.scoreSecurity,
+      scoreCodeQuality: s.scoreCodeQuality,
+      scoreInnovation: s.scoreInnovation,
+      scoreUiUx: s.scoreUiUx,
+      scoreBackend: s.scoreBackend,
+      scoreCommits: s.scoreCommits,
+      scoreDocumentation: s.scoreDocumentation,
+      scorePrompt: s.scorePrompt,
     }));
 
     return NextResponse.json({ results: formattedData });

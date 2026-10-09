@@ -90,15 +90,20 @@ export default function ResultTab({
     );
   }
 
-  // Parameter breakdown calculation (deterministic simulation)
+  // Parameter breakdown calculation
+  const getSubscore = (score: any, simFallback: number) => {
+    return score !== undefined && score !== null ? parseFloat(Number(score).toFixed(1)) : Math.min(100, Math.max(0, parseFloat(simFallback.toFixed(1))));
+  };
+  
   const base = result.score;
   const categories = [
-    { label: 'Innovation & Novelty', val: Math.min(100, Math.max(0, parseFloat((base * 0.95 + 4).toFixed(1)))) },
-    { label: 'Code Standards & Quality', val: Math.min(100, Math.max(0, parseFloat((base * 1.02 - 1).toFixed(1)))) },
-    { label: 'Impact & Functionality', val: Math.min(100, Math.max(0, parseFloat((base * 0.92 + 6).toFixed(1)))) },
-    { label: 'Architecture & Scalability', val: Math.min(100, Math.max(0, parseFloat((base * 0.98 + 2).toFixed(1)))) },
-    { label: 'Security & Optimization', val: Math.min(100, Math.max(0, parseFloat((base * 1.05 - 5).toFixed(1)))) },
+    { label: 'Innovation & Novelty', val: getSubscore(result.scoreInnovation, base * 0.95 + 4) },
+    { label: 'Code Standards & Quality', val: getSubscore(result.scoreCodeQuality, base * 1.02 - 1) },
+    { label: 'UI / UX & Impact', val: getSubscore(result.scoreUiUx, base * 0.92 + 6) },
+    { label: 'Backend & Architecture', val: getSubscore(result.scoreBackend, base * 0.98 + 2) },
+    { label: 'Security & Optimization', val: getSubscore(result.scoreSecurity, base * 1.05 - 5) },
   ];
+
 
   return (
     <div className="w-full max-w-lg mx-auto px-4 py-8 space-y-8 animate-fade-in">

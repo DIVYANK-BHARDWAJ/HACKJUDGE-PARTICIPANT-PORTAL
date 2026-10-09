@@ -94,8 +94,22 @@ export default function Home() {
       const res = await fetch('/api/results');
       if (res.ok) {
         const data = await res.json();
-        setSubmissions(data.results || []);
-        localStorage.setItem('hackarena_submissions', JSON.stringify(data.results || []));
+        const results = data.results || [];
+        setSubmissions(results);
+        localStorage.setItem('hackarena_submissions', JSON.stringify(results));
+        
+        // Sync userResult with live data
+        const savedResult = localStorage.getItem('hackarena_user_result');
+        if (savedResult) {
+          const parsed = JSON.parse(savedResult);
+          const liveResult = results.find((r: any) => r.github_url === parsed.github_url);
+          if (liveResult) {
+            // Merge to preserve 'improved' and 'latest_score' local state if needed
+            const merged = { ...parsed, ...liveResult, score: liveResult.score };
+            setUserResult(merged);
+            localStorage.setItem('hackarena_user_result', JSON.stringify(merged));
+          }
+        }
         return;
       }
     } catch (err) {

@@ -68,6 +68,7 @@ export async function POST(req: NextRequest) {
 
     const submissionId = analyzeData.id;
     const status = analyzeData.status || 'analyzing';
+    let finalData = analyzeData;
 
     if (submissionId) {
       const resultUrl = `${rawEngineUrl}/api/result/${submissionId}`;
@@ -78,6 +79,7 @@ export async function POST(req: NextRequest) {
         if (resultRes.ok) {
           const resultData = await resultRes.json();
           score = parseFloat(resultData.scoreTotal || 0);
+          finalData = resultData;
           console.log(`[API Proxy] Cached hit complete! Score: ${score}`);
         } else {
           return NextResponse.json({ error: 'Failed to fetch details for completed cached evaluation.' }, { status: 500 });
@@ -123,7 +125,15 @@ export async function POST(req: NextRequest) {
       deployment_link: deployment_link || '',
       dbData: null,
       dbError,
-      isMock: false
+      isMock: false,
+      scoreSecurity: finalData.scoreSecurity || 0,
+      scoreCodeQuality: finalData.scoreCodeQuality || 0,
+      scoreInnovation: finalData.scoreInnovation || 0,
+      scoreUiUx: finalData.scoreUiUx || 0,
+      scoreBackend: finalData.scoreBackend || 0,
+      scoreCommits: finalData.scoreCommits || 0,
+      scoreDocumentation: finalData.scoreDocumentation || 0,
+      scorePrompt: finalData.scorePrompt || 0
     });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || 'Submission process failed.' }, { status: 500 });
@@ -201,7 +211,15 @@ export async function GET(req: NextRequest) {
       deployment_link,
       dbData: null,
       dbError,
-      isMock: false
+      isMock: false,
+      scoreSecurity: resultData.scoreSecurity || 0,
+      scoreCodeQuality: resultData.scoreCodeQuality || 0,
+      scoreInnovation: resultData.scoreInnovation || 0,
+      scoreUiUx: resultData.scoreUiUx || 0,
+      scoreBackend: resultData.scoreBackend || 0,
+      scoreCommits: resultData.scoreCommits || 0,
+      scoreDocumentation: resultData.scoreDocumentation || 0,
+      scorePrompt: resultData.scorePrompt || 0
     });
 
   } catch (err: any) {
