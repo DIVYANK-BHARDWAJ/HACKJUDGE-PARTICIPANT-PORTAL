@@ -21,8 +21,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Please enter a valid GitHub repository URL.' }, { status: 400 });
     }
 
-    const defaultEndTime = process.env.VITE_HACKATHON_END_TIME || '2026-08-09T12:30:00Z';
-    const deadline = new Date(defaultEndTime).getTime();
+    let rawEngineUrl = process.env.VITE_JUDGING_ENGINE_URL || '';
+    if (rawEngineUrl.endsWith('/')) {
+      rawEngineUrl = rawEngineUrl.slice(0, -1);
+    }
+    
+    let deadline = new Date('2026-08-09T12:30:00Z').getTime();
+    try {
+      if (rawEngineUrl && !rawEngineUrl.includes('placeholder')) {
+        const configRes = await fetch(`${rawEngineUrl}/api/config`, { cache: 'no-store' });
+        if (configRes.ok) {
+          const configData = await configRes.json();
+          if (configData.endTime) {
+            deadline = new Date(configData.endTime).getTime();
+          }
+        }
+      }
+    } catch (e) {
+      // Fallback if engine is unreachable
+    }
+
     if (Date.now() > deadline) {
       return NextResponse.json({ error: 'sorry you submitted after the deadline' }, { status: 400 });
     }
